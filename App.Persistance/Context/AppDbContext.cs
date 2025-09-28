@@ -1,5 +1,10 @@
-﻿namespace App.Persistance.Context;
+﻿using Microsoft.EntityFrameworkCore;
 
-public sealed class AppDbContext
+namespace App.Persistance.Context;
+
+public sealed class AppDbContext : DbContext
 {
+    public AppDbContext(DbContextOptions options) : base(options) 
+    {    
+    }
 }

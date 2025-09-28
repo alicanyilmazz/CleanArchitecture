@@ -1,3 +1,4 @@
+using App.Persistance.Extension;
 using Scalar.AspNetCore;
 
 namespace App.API
@@ -8,9 +9,9 @@ namespace App.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
-
             builder.Services.AddControllers().AddApplicationPart(typeof(Presentation.AssemblyReference).Assembly);
             builder.Services.AddOpenApi();
+            builder.Services.AddPersistance(builder.Configuration);
 
             var app = builder.Build();
 
