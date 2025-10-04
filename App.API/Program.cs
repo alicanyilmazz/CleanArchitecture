@@ -12,7 +12,7 @@ namespace App.API
             builder.Services.AddControllers().AddApplicationPart(typeof(Presentation.AssemblyReference).Assembly);
             builder.Services.AddOpenApi();
             builder.Services.AddPersistance(builder.Configuration);
-
+            builder.Services.AddMediatR(x=>x.RegisterServicesFromAssembly(typeof(Application.AssemblyReference).Assembly));
             var app = builder.Build();
 
             if (app.Environment.IsDevelopment())
