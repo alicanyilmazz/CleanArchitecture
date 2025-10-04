@@ -1,10 +1,7 @@
 ﻿using App.Domain.Abstracts.Entities;
-using App.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 
 namespace App.Persistance.Context;
-
 public sealed class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions options) : base(options) 
