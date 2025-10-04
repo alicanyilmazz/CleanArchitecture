@@ -1,4 +1,4 @@
-﻿namespace App.Domain.Entities;
+﻿namespace App.Domain.Concretes.Entities;
 public class Product : Entity<int>
 {
     public string Name { get; set; }
