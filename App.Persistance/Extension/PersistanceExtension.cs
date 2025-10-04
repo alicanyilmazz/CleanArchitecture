@@ -13,6 +13,7 @@ public static class PersistanceExtension
     public static IServiceCollection AddPersistance(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<IProductService,ProductService>();
+        services.AddAutoMapper(x=>x.AddMaps(typeof(AssemblyReference).Assembly));
         services.AddDbContext<AppDbContext>(options =>
         {
             var connectionString = configuration.GetSection(ConnectionStringOption.Key).Get<ConnectionStringOption>();
