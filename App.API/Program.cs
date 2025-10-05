@@ -1,4 +1,7 @@
+using App.Application.Behaviors;
 using App.Persistance.Extension;
+using FluentValidation;
+using MediatR;
 using Scalar.AspNetCore;
 
 namespace App.API
@@ -13,6 +16,8 @@ namespace App.API
             builder.Services.AddOpenApi();
             builder.Services.AddPersistance(builder.Configuration);
             builder.Services.AddMediatR(x=>x.RegisterServicesFromAssembly(typeof(Application.AssemblyReference).Assembly));
+            builder.Services.AddTransient(typeof(IPipelineBehavior<,>),typeof(ValidationBehavior<,>));
+            builder.Services.AddValidatorsFromAssembly(typeof(Application.AssemblyReference).Assembly);
             var app = builder.Build();
 
             if (app.Environment.IsDevelopment())
