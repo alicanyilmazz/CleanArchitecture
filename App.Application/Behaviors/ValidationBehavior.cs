@@ -1,6 +1,8 @@
-﻿using FluentValidation;
+﻿using App.Application.Common.Concretes.Dtos;
+using FluentValidation;
 using FluentValidation.Results;
 using MediatR;
+using System.Net;
 
 namespace App.Application.Behaviors
 {
@@ -18,15 +20,43 @@ namespace App.Application.Behaviors
                 return await next(cancellationToken);
 
             var context = new ValidationContext<TRequest>(request);
+            var results = await Task.WhenAll(_validators.Select(v => v.ValidateAsync(context, cancellationToken)));
+            var failures = results.SelectMany(r => r.Errors)
+                                  .Where(e => e is not null)
+                                  .GroupBy(e => new { e.PropertyName, e.ErrorMessage })
+                                  .Select(g => g.Key)
+                                  .ToList();
 
-            var validationErrors = _validators.Select(v => v.Validate(context)).SelectMany(v => v.Errors).Where(v => v != null).GroupBy(v => v.PropertyName, v => v.ErrorMessage, (propertyName, errorMessage) => new { Key = propertyName, Values = errorMessage.Distinct().ToArray() }).ToDictionary(v => v.Key, v => v.Values[0]);
+            if (failures.Count == 0)
+                return await next(cancellationToken);
 
-            if (validationErrors.Any())
+            var errors = failures
+                .Select(e => string.IsNullOrWhiteSpace(e.PropertyName)
+                    ? e.ErrorMessage
+                    : $"{e.PropertyName}: {e.ErrorMessage}")
+                .ToList();
+
+            return CreateFailure(errors, HttpStatusCode.BadRequest);
+        }
+        private static TResponse CreateFailure(List<string> errors, HttpStatusCode statusCode)
+        {
+            var respType = typeof(TResponse);
+
+            if (respType == typeof(ServiceResult))
+                return (TResponse)(object)ServiceResult.Fail(errors, statusCode);
+
+            if (respType.IsGenericType && respType.GetGenericTypeDefinition() == typeof(ServiceResult<>))
             {
-                var errors = validationErrors.Select(v => new ValidationFailure { PropertyName = v.Value, ErrorCode = v.Key });
-                throw new ValidationException(errors);
+                var failMethod = respType.GetMethod(nameof(ServiceResult<object>.Fail), [typeof(List<string>), typeof(HttpStatusCode)]);
+
+                if (failMethod is not null)
+                {
+                    var result = failMethod.Invoke(null, [errors, statusCode])!;
+                    return (TResponse)result;
+                }
             }
-            return await next(cancellationToken);
+
+            throw new InvalidOperationException($"ValidationBehavior, TResponse type must be ServiceResult or ServiceResult<T> Current: {respType.FullName}");
         }
     }
 }
